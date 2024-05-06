@@ -3,56 +3,72 @@ import pandas as pd
 
 from SMPyBandits.Arms import Gaussian
 from SMPyBandits.Policies import UCB, Exp3
-# from custom_policies.LinUCB import LinUCB
+from SMPyBandits.Environment import Evaluator, tqdm
 
-num_arms = 5
-time_steps = 1000
-
-# 10M is too much, it is expected to split the dataset into training/validation/test set to 70%/15%/15% respectively.
-chunk_size = 1000
-
-# Process the file in chunks
-# for chunk in pd.read_csv('pcb_dataset_final.tsv', delimiter='\t', chunksize=chunk_size):
-#     print(chunk.head())
+import random
 
 
-#########################
-# Algorithm logic below #
-#########################
-np.random.seed(0)
+policies = [
+    {"archtype": UCB, "params": {}},
+    {"archtype": Exp3, "params": {"gamma": 0.01}},
+]
 
-# Initialize the arms
-arms = [Gaussian(np.random.uniform(0.1, 0.9), 0.1) for _ in range(num_arms)]
+environments = [ 
+        {
+            "arm_type": Gaussian,
+            "params": [(np.random.uniform(0.1, 0.9), 0.1), 
+                       (np.random.uniform(0.1, 0.9), 0.1), 
+                       (np.random.uniform(0.1, 0.9), 0.1),
+                       (np.random.uniform(0.1, 0.9), 0.1),
+                       (np.random.uniform(0.1, 0.9), 0.1)]
+        }
+    ]
 
-# Define a function to run the simulation for a given policy
-def run_simulation(policy, arms, time_steps):
-    history = []
-    for t in range(time_steps):
-        try:
-            # Stochastic bandit environment
-            chosen_arm = policy.choice()
-            reward = arms[chosen_arm].draw()
-            policy.getReward(chosen_arm, reward)
-
-            # Record history (optional)
-            history.append((chosen_arm, reward))
-        except Exception as e:
-            print(f"Error on iteration {t}: {e}")
-            break
-    
-    return history
-
-# Initialize the policies in a dictionary
-policies = {
-    'UCB': UCB(nbArms=num_arms),
-    'EXP3': Exp3(nbArms=num_arms, gamma=0.1),
+config = {
+    "horizon": 1000,
+    "repetitions": 10,
+    "n_jobs": 4,
+    "verbosity": 6,
+    "environment": environments,
+    "policies": policies,
 }
 
-# Run simulations for all policies
-results = {}
-for policy_name, policy in policies.items():
-    results[policy_name] = run_simulation(policy, arms, time_steps)
+evaluator = Evaluator(config)
 
-# Display results
-for policy_name, result in results.items():
-    print(f"Results for {policy_name}: {result[:10]}...")  # Print the first 10 results for brevity
+# Example of setting a seed with an integer
+seed_value = 123  # Ensure this is an integer, or cast it
+random.seed(seed_value)  # This should work without error
+
+def safe_set_seed(seed_value):
+    """ Safely set the seed for random number generation. """
+    try:
+        # Attempt to convert to int if not None and not already an int
+        if seed_value is not None and not isinstance(seed_value, int):
+            seed_value = int(seed_value)
+    except (TypeError, ValueError):
+        # If the seed is not convertible to int, log it and use a default seed
+        print(f"Provided seed ({seed_value}) is invalid. Using a default seed.")
+        seed_value = 42  # Default seed
+    
+    # Set the seed
+    random.seed(seed_value)
+
+# Fetch the seed from the configuration, or use None if not set
+config_seed = config.get('seed', None)
+
+# Call the safe_set_seed function with the fetched or default seed
+safe_set_seed(config_seed)
+random.seed(seed_value)
+
+evaluator.startAllEnv()
+
+def plot_env(evaluation, environment_id):
+    evaluation.printFinalRanking(environment_id)
+    evaluation.plotRegrets(environment_id)
+    evaluation.plotRegrets(environment_id, semilogx=True)
+    evaluation.plotRegrets(environment_id, meanReward=True)
+    # evaluation.plotBestArmPulls(environment_id)
+
+
+for env_id in range(len(environments)):
+    plot_env(evaluator, env_id)

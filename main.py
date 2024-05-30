@@ -40,7 +40,7 @@ for _ in range(num_repetitions):
         "UCB": UCB(n_arms=len(context_vectors)),
         "EXP3": EXP3(n_arms=len(context_vectors)),
         "LinUCB": LinUCB(n_arms=len(context_vectors), d=len(context_vectors[0])),
-        "LinEXP3": LinEXP3(n_arms=len(context_vectors), dimension=len(context_vectors[0]), eta=0.1, gamma=0.1, beta=0.1, m=10),
+        "LinEXP3": LinEXP3(n_arms=len(context_vectors), dimension=len(context_vectors[0]), eta=0.5, gamma=0.5),
         "Random": RandomPolicy(n_arms=len(context_vectors), d=len(context_vectors[0])),
         "Optimal": OptimalPolicy(n_arms=len(context_vectors), reward_function=calculate_reward)
     }
@@ -57,6 +57,8 @@ for _ in range(num_repetitions):
             reward = calculate_reward(t, context)
             if name == "Optimal":
                 policy.update(arm, reward, context)
+            elif name == "LinEXP3":
+                policy.update(arm, reward, context_vectors)
             else:
                 policy.update(arm, reward, context)
 
@@ -78,10 +80,21 @@ for name in reward_records.keys():
 for name in regret_records.keys():
     regret_records[name] /= num_repetitions
 
+# Calculate final cumulative regret
+final_cumulative_regret = {name: regrets[-1] for name, regrets in regret_records.items()}
+
+# Sort policies by their final cumulative regret
+sorted_policies = sorted(final_cumulative_regret.items(), key=lambda x: x[1])
+# Print the final ranking
+print("Final Ranking of Policies by Cumulative Regret:")
+for rank, (name, regret) in enumerate(sorted_policies, 1):
+    print(f"{rank}. {name}: {regret}")
+
 # Plot cumulative rewards
 plt.figure(figsize=(12, 8))
 for name, rewards in reward_records.items():
-    plt.plot(rewards, label=name)
+    if name != "Optimal":
+        plt.plot(rewards, label=name)
 plt.xlabel('Iteration')
 plt.ylabel('Cumulative Reward')
 plt.title('Average Cumulative Reward Over Time')

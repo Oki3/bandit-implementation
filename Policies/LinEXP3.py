@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.random as rn
-from BasePolicy import BasePolicy
+from Policies.BasePolicy import BasePolicy
 
 ETA = 0.1
 GAMMA = 0.1
@@ -12,8 +12,8 @@ class LinEXP3(BasePolicy):
     The linEXP3 contextual bandit policy with a sophisticated estimator.
     """
 
-    def __init__(self, nbArms, dimension, m=M, beta=BETA, eta=ETA, gamma=GAMMA, lower=0., amplitude=1.):
-        super().__init__(nbArms)
+    def __init__(self, n_arms, dimension, m=M, beta=BETA, eta=ETA, gamma=GAMMA, lower=0., amplitude=1.):
+        super().__init__(n_arms)
         assert eta > 0, "Error: the 'eta' parameter for the LinEXP3 class must be greater than 0"
         assert 0 < gamma < 1, "Error: the 'gamma' parameter must be in the range (0, 1)"
         assert 0 < beta < 1, "Error: the 'beta' parameter must be in the range (0, 1)"
@@ -24,8 +24,8 @@ class LinEXP3(BasePolicy):
         self.eta = eta
         self.gamma = gamma
         self.dimension = dimension
-        self.k = nbArms
-        self.cumulative_theta_hats = np.zeros((nbArms, dimension))
+        self.k = n_arms
+        self.cumulative_theta_hats = np.zeros((n_arms, dimension))
 
     def __str__(self):
         return r"linEXP3($\eta: {:.3g}$, $\gamma: {:.3g}$)".format(self.eta, self.gamma)

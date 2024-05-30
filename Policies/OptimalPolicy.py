@@ -1,6 +1,6 @@
 import numpy as np
 
-from BasePolicy import BasePolicy
+from Policies.BasePolicy import BasePolicy
 
 class OptimalPolicy(BasePolicy):
     def __init__(self, n_arms, reward_function):

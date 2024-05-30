@@ -1,5 +1,5 @@
 import numpy as np
-from BasePolicy import BasePolicy
+from Policies.BasePolicy import BasePolicy
 
 class RandomPolicy(BasePolicy):
     def __init__(self, n_arms, d):

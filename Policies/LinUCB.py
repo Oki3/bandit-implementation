@@ -1,5 +1,5 @@
 import numpy as np
-from BasePolicy import BasePolicy
+from Policies.BasePolicy import BasePolicy
 
 class LinUCB(BasePolicy):
     def __init__(self, n_arms, d, alpha=0.1):

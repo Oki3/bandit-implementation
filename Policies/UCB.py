@@ -1,5 +1,5 @@
 import numpy as np
-from BasePolicy import BasePolicy
+from Policies.BasePolicy import BasePolicy
 
 class UCB(BasePolicy):
     def __init__(self, n_arms, alpha=1.0):
@@ -18,7 +18,7 @@ class UCB(BasePolicy):
         self.choices.append(choice)
         return choice
     
-    def update(self, chosen_arm, reward):
+    def update(self, chosen_arm, reward, context):
         self.counts[chosen_arm] += 1
         self.total_counts += 1
         n = self.counts[chosen_arm]

@@ -1,6 +1,7 @@
 import numpy as np
+from Policies.BasePolicy import BasePolicy
 
-class EXP3:
+class EXP3(BasePolicy):
     def __init__(self, n_arms, gamma=0.1):
         self.n_arms = n_arms
         self.gamma = gamma

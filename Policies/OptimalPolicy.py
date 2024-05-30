@@ -1,8 +1,10 @@
 import numpy as np
 
-class OptimalPolicy:
+from BasePolicy import BasePolicy
+
+class OptimalPolicy(BasePolicy):
     def __init__(self, n_arms, reward_function):
-        self.n_arms = n_arms
+        super().__init__(n_arms)
         self.reward_function = reward_function
 
     def select_arm(self, t, contexts):

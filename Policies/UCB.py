@@ -1,8 +1,9 @@
 import numpy as np
+from BasePolicy import BasePolicy
 
-class UCB:
+class UCB(BasePolicy):
     def __init__(self, n_arms, alpha=1.0):
-        self.n_arms = n_arms
+        super().__init__(n_arms)
         self.alpha = alpha
         self.counts = np.zeros(n_arms)
         self.values = np.zeros(n_arms)

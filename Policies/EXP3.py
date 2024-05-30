@@ -6,7 +6,7 @@ class EXP3:
         self.gamma = gamma
         self.weights = np.ones(n_arms)
     
-    def select_arm(self):
+    def select_arm(self, contexts):
         total_weight = np.sum(self.weights)
         probs = (1 - self.gamma) * (self.weights / total_weight) + (self.gamma / self.n_arms)
         return np.random.choice(np.arange(self.n_arms), p=probs)

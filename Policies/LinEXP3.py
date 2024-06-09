@@ -5,7 +5,7 @@ from Policies.BasePolicy import BasePolicy
 ETA = 0.1
 GAMMA = 0.1
 BETA = 0.5
-M = 1200
+M = 31*4*3
 
 class LinEXP3(BasePolicy):
     """
@@ -38,13 +38,31 @@ class LinEXP3(BasePolicy):
 
     def select_arm(self, contexts):
         """Choose an arm based on the LINEXP3 policy."""
-        weights = np.zeros(self.k)
+        log_weights = np.zeros(self.k)
         for a in range(self.k):
-            weights[a] = np.exp(self.eta * np.dot(contexts[a], self.cumulative_theta_hats[a]))
-
+            log_weights[a] = self.eta * np.dot(contexts[a], self.cumulative_theta_hats[a])
+        
+        # Use log-sum-exp trick for numerical stability
+        max_log_weight = np.max(log_weights)
+        log_weights -= max_log_weight  # Prevent overflow
+        weights = np.exp(log_weights)
+        
         # Compute probabilities
         sum_weights = np.sum(weights)
+        if sum_weights == 0 or np.isnan(sum_weights) or np.isinf(sum_weights):
+            print("Sum of weights is zero, NaN, or inf. Weights:", weights)
+            raise ValueError("Sum of weights is zero, NaN, or inf")
+
         probabilities = (1 - self.gamma) * (weights / sum_weights) + self.gamma / self.k
+
+        # Check for NaN values in probabilities
+        if np.any(np.isnan(probabilities)):
+            print("NaN values detected in probabilities:")
+            print("Log Weights:", log_weights)
+            print("Weights:", weights)
+            print("Sum of weights:", sum_weights)
+            print("Probabilities:", probabilities)
+            raise ValueError("Probabilities contain NaN values")
 
         return rn.choice(self.k, p=probabilities)
     
@@ -59,4 +77,3 @@ class LinEXP3(BasePolicy):
 
         Sigma_plus_t_a = self.beta * np.eye(self.dimension) + self.beta * sum(A)
         return Sigma_plus_t_a
-

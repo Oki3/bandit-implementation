@@ -14,15 +14,17 @@ phi = np.array([0.2, 0.1, 0.45])
 context_vectors = [
     np.array([0.2, 0.1, 0.3]),
     np.array([0.5, 0.3, 0.4]),
-    np.array([0.4, 0.3, 0.7]),
-    np.array([0.5, 0.5, 0.35])
+    np.array([0.4, 0.7, 0.05]),
+    np.array([0.5, 0.5, 0.35]),
+    np.array([0.7, 0.2, 0.7])
 ]
 
 # Function to calculate reward vector
 def calculate_reward_vector(t):
-    return np.sin(w * t*100 + phi)
+    return np.sin(w * t + phi)
     # return np.cos(w*t+phi)
     # return np.sqrt(t)*np.dot(w, phi)
+    # return w-phi
 
 # Function to calculate reward
 def calculate_reward(t, context):
@@ -30,8 +32,8 @@ def calculate_reward(t, context):
     return np.dot(reward_vector, context)
 
 # Simulation parameters
-num_iterations = 1000
-num_repetitions = 20
+num_iterations = 10000
+num_repetitions = 1
 
 # Initialize reward and regret arrays
 reward_records = {policy_name: np.zeros(num_iterations) for policy_name in ["UCB", "EXP3", "LinUCB", "LinEXP3", "Random", "Optimal"]}
@@ -45,7 +47,7 @@ for rep in range(num_repetitions):
     policies = {
         "UCB": UCB(n_arms=len(context_vectors)),
         "EXP3": EXP3(n_arms=len(context_vectors)),
-        "LinUCB": LinUCB(n_arms=len(context_vectors), d=len(context_vectors[0])),
+        "LinUCB": LinUCB(n_arms=len(context_vectors), d=len(context_vectors[0]), alpha=0.5),
         "LinEXP3": LinEXP3(n_arms=len(context_vectors), dimension=len(context_vectors[0]), eta=0.5, gamma=0.2),
         "Random": RandomPolicy(n_arms=len(context_vectors), d=len(context_vectors[0])),
         "Optimal": OptimalPolicy(n_arms=len(context_vectors), reward_function=calculate_reward)

@@ -9,21 +9,36 @@ from Policies.LinEXP3 import LinEXP3
 from Policies.RandomPolicy import RandomPolicy
 from Policies.OptimalPolicy import OptimalPolicy
 
-w = np.array([0.44, 0.6, 0.2])
-phi = np.array([0.2, 0.1, 0.45])
+w = np.array([0.04, 0.06, 0.02])
+phi = np.array([0.2, 0.1, 0.45])*0.1
 context_vectors = [
-    np.array([0.2, 0.1, 0.3]),
-    np.array([0.5, 0.3, 0.4]),
-    np.array([0.4, 0.7, 0.05]),
-    np.array([0.5, 0.5, 0.35]),
-    np.array([0.7, 0.2, 0.7])
+    np.array([0.9, 0.1, 0.2]),   # High variance in the first dimension
+    np.array([0.1, 0.9, 0.1]),   # High values in the second dimension
+    np.array([0.4, 0.4, 0.4]),   # Balanced values across all dimensions
+    np.array([0.1, 0.1, 0.1]),   # Low values across all dimensions
+    np.array([0.1, 0.2, 0.9]),   # High values in the third dimension
+    np.array([0.3, 0.5, 0.6]),   # Moderate values with slight bias towards the second and third dimensions
+    np.array([0.6, 0.2, 0.8]),   # Random values with a mix of high and low in different dimensions
+    np.array([0.5, 0.5, 0.5]),   # Values centered around mid-range
+    np.array([0.3, 0.4, 0.9]),   # High variance in the third dimension
+    np.array([0.8, 0.1, 0.1])    # Very low values except for the first dimension
 ]
+
+# context_vectors = [
+#     np.array([0.9, 0.1, 0.2]),   # High variance in the first dimension
+#     np.array([0.1, 0.9, 0.1]),
+# ]
 
 # Function to calculate reward vector
 def calculate_reward_vector(t):
-    return np.sin(w * t + phi)
+    # sin_values = np.abs(np.sin(w * t + phi))
+    # ones_array = np.zeros(3)
+    # elementwise_max = np.maximum(sin_values, ones_array)
+    # return elementwise_max
+    return np.abs(np.sin(w * t + phi))
     # return np.cos(w*t+phi)
-    # return np.sqrt(t)*np.dot(w, phi)
+    # return np.log(t)*(w-phi)
+    # return np.sqrt(t)*(w+phi)
     # return w-phi
 
 # Function to calculate reward
@@ -32,7 +47,7 @@ def calculate_reward(t, context):
     return np.dot(reward_vector, context)
 
 # Simulation parameters
-num_iterations = 10000
+num_iterations = 2000
 num_repetitions = 1
 
 # Initialize reward and regret arrays
@@ -48,7 +63,7 @@ for rep in range(num_repetitions):
         "UCB": UCB(n_arms=len(context_vectors)),
         "EXP3": EXP3(n_arms=len(context_vectors)),
         "LinUCB": LinUCB(n_arms=len(context_vectors), d=len(context_vectors[0]), alpha=0.5),
-        "LinEXP3": LinEXP3(n_arms=len(context_vectors), dimension=len(context_vectors[0]), eta=0.5, gamma=0.2),
+        "LinEXP3": LinEXP3(n_arms=len(context_vectors), dimension=len(context_vectors[0]), eta=0.5, gamma=0.05),
         "Random": RandomPolicy(n_arms=len(context_vectors), d=len(context_vectors[0])),
         "Optimal": OptimalPolicy(n_arms=len(context_vectors), reward_function=calculate_reward)
     }
@@ -130,12 +145,6 @@ def plot_cumulative_regrets():
     plt.legend()
     plt.show()
 
-# Plot cumulative rewards
-# plot_cumulative_rewards()
-
-# Plot cumulative regrets
-plot_cumulative_regrets()
-
 # Plot normal distributions of cumulative regrets for 20 realizations
 def plot_normal_distributions_of_cumulative_regret():
     plt.figure(figsize=(12, 8))
@@ -153,5 +162,6 @@ def plot_normal_distributions_of_cumulative_regret():
     plt.legend()
     plt.show()
 
-# Plot normal distributions of cumulative regrets
-plot_normal_distributions_of_cumulative_regret()
+# plot_cumulative_rewards()
+plot_cumulative_regrets()
+# plot_normal_distributions_of_cumulative_regret()

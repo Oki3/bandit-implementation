@@ -33,7 +33,7 @@ class LinEXP3(BasePolicy):
 
     def update(self, arm, reward, context):
         """Update the parameter estimates for the chosen arm."""
-        Sigma_plus_t_a = self.matrix_geometric_resampling(context)
+        Sigma_plus_t_a = self.matrix_geometric_resampling(context, arm)
         theta_hats = np.dot(Sigma_plus_t_a, context[arm]) * reward
         self.cumulative_theta_hats[arm] += theta_hats
 
@@ -52,12 +52,10 @@ class LinEXP3(BasePolicy):
             for a in range(self.k):
                 log_weights[a] = self.eta * np.dot(contexts[a], self.cumulative_theta_hats[a])
             
-            # Use log-sum-exp trick for numerical stability
             max_log_weight = np.max(log_weights)
-            log_weights -= max_log_weight  # Prevent overflow
+            log_weights -= max_log_weight
             weights = np.exp(log_weights)
             
-            # Compute probabilities
             sum_weights = np.sum(weights)
             if sum_weights == 0 or np.isnan(sum_weights) or np.isinf(sum_weights):
                 print("Sum of weights is zero, NaN, or inf. Weights:", weights)
@@ -65,7 +63,6 @@ class LinEXP3(BasePolicy):
 
             probabilities = (1 - self.gamma) * (weights / sum_weights) + self.gamma / self.k
 
-            # Check for NaN values in probabilities
             if np.any(np.isnan(probabilities)):
                 print("NaN values detected in probabilities:")
                 print("Log Weights:", log_weights)
@@ -75,15 +72,29 @@ class LinEXP3(BasePolicy):
                 raise ValueError("Probabilities contain NaN values")
 
             return rn.choice(self.k, p=probabilities)
+        
+
+    # def matrix_geometric_resampling(self, context):
+    #     """Perform MGR procedure"""
+    #     A = [np.eye(self.dimension) for _ in range(self.k)] 
+    #     for _ in range(self.M):
+    #         r = np.random.randint(0, self.k)
+    #         context_drawn = context[r]
+    #         B_k = np.outer(context_drawn, context_drawn)
+    #         A[r] = np.dot(A[r], (np.eye(self.dimension) - self.beta * B_k))
+
+    #     Sigma_plus_t_a = self.beta * np.eye(self.dimension) + self.beta * sum(A)
+    #     return Sigma_plus_t_a
     
-    def matrix_geometric_resampling(self, context):
+    def matrix_geometric_resampling(self, context, arm):
         """Perform MGR procedure"""
         A = [np.eye(self.dimension) for _ in range(self.k)] 
         for _ in range(self.M):
-            r = np.random.randint(0, self.k)
-            context_drawn = context[r]
-            B_k = np.outer(context_drawn, context_drawn)
-            A[r] = np.dot(A[r], (np.eye(self.dimension) - self.beta * B_k))
+            drawn_action = self.select_arm(context)
+            if drawn_action == arm:
+                context_drawn = context[drawn_action]
+                B_k = np.outer(context_drawn, context_drawn)
+                A[arm] = np.dot(A[arm], (np.eye(self.dimension) - self.beta * B_k))
 
         Sigma_plus_t_a = self.beta * np.eye(self.dimension) + self.beta * sum(A)
         return Sigma_plus_t_a

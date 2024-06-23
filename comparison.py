@@ -10,7 +10,7 @@ from Policies.RandomPolicy import RandomPolicy
 from Policies.OptimalPolicy import OptimalPolicy
 
 w = np.array([0.04, 0.06, 0.02])
-phi = np.array([0.2, 0.1, 0.45])*0.1
+phi = np.array([0.2, 0.1, 0.45]) * 0.1
 context_vectors = [
     np.array([0.9, 0.1, 0.2]),   # High variance in the first dimension
     np.array([0.1, 0.9, 0.1]),   # High values in the second dimension
@@ -24,23 +24,10 @@ context_vectors = [
     np.array([0.8, 0.1, 0.1])    # Very low values except for the first dimension
 ]
 
-# context_vectors = [
-#     np.array([0.9, 0.1, 0.2]),   # High variance in the first dimension
-#     np.array([0.1, 0.9, 0.1]),
-# ]
-
 # Function to calculate reward vector
 def calculate_reward_vector(t):
-    # sin_values = np.abs(np.sin(w * t + phi))
-    # ones_array = np.zeros(3)
-    # elementwise_max = np.maximum(sin_values, ones_array)
-    # return elementwise_max
     return np.abs(np.sin(w * t + phi))
-    # return np.cos(w*t+phi)
     # return np.log(t)*(w-phi)
-    # return 10*(w*t + phi)
-    # return np.sqrt(t)*(w+phi)
-    # return w-phi
 
 # Function to calculate reward
 def calculate_reward(t, context):
@@ -49,42 +36,34 @@ def calculate_reward(t, context):
 
 # Simulation parameters
 num_iterations = 5000
-num_repetitions = 1
+num_repetitions = 10
 
 # Initialize reward and regret arrays
-reward_records = {policy_name: np.zeros(num_iterations) for policy_name in ["UCB", "EXP3", "LinUCB", "LinEXP3", "Random", "Optimal"]}
-regret_records = {policy_name: np.zeros(num_iterations) for policy_name in ["UCB", "EXP3", "LinUCB", "LinEXP3", "Random"]}
-arm_selection_counts = {policy_name: np.zeros(len(context_vectors)) for policy_name in ["UCB", "EXP3", "LinUCB", "LinEXP3", "Random", "Optimal"]}
-all_cumulative_regrets = {policy_name: np.zeros((num_repetitions, num_iterations)) for policy_name in ["UCB", "EXP3", "LinUCB", "LinEXP3", "Random"]}
+policy_names = [f"LinUCB(alpha = {alpha})" for alpha in [0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99]] + ["Optimal"]
+reward_records = {name: np.zeros(num_iterations) for name in policy_names}
+regret_records = {name: np.zeros(num_iterations) for name in policy_names[:-1]}
+arm_selection_counts = {name: np.zeros(len(context_vectors)) for name in policy_names}
+all_cumulative_regrets = {name: np.zeros((num_repetitions, num_iterations)) for name in policy_names[:-1]}
 
 # Run simulations
 for rep in range(num_repetitions):
     print(f"Turn {rep}...")
     policies = {
-        "UCB": UCB(n_arms=len(context_vectors)),
-        "EXP3": EXP3(n_arms=len(context_vectors), gamma=0.1),
-        "LinUCB": LinUCB(n_arms=len(context_vectors), d=len(context_vectors[0]), alpha=0.5),
-        "LinEXP3": LinEXP3(n_arms=len(context_vectors), dimension=len(context_vectors[0]), eta=0.55, gamma=0.2),
-        "Random": RandomPolicy(n_arms=len(context_vectors), d=len(context_vectors[0])),
-        "Optimal": OptimalPolicy(n_arms=len(context_vectors), reward_function=calculate_reward)
+        f"LinUCB(alpha = {alpha})": LinUCB(n_arms=len(context_vectors), d=len(context_vectors[0]), alpha=alpha) for alpha in [0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99]
     }
+    policies["Optimal"] = OptimalPolicy(n_arms=len(context_vectors), reward_function=calculate_reward)
 
     cumulative_rewards = {policy_name: [] for policy_name in policies.keys()}
 
     for t in range(1, num_iterations + 1):
         for name, policy in policies.items():
-            if name == "Optimal" or name == "LinEXP3":
+            if name == "Optimal":
                 arm = policy.select_arm(t, context_vectors)
             else:
                 arm = policy.select_arm(context_vectors)
             context = context_vectors[arm]
             reward = calculate_reward(t, context)
-            if name == "Optimal":
-                policy.update(arm, reward, context)
-            elif name == "LinEXP3":
-                policy.update(arm, reward, context_vectors, t)
-            else:
-                policy.update(arm, reward, context)
+            policy.update(arm, reward, context)
 
             arm_selection_counts[name][arm] += 1
 
@@ -171,9 +150,9 @@ def plot_cumulative_regrets_with_confidence_intervals():
 
         plt.plot(mean_regrets, label=name)
         plt.fill_between(range(len(mean_regrets)), 
-                            mean_regrets - confidence_interval, 
-                            mean_regrets + confidence_interval, 
-                            alpha=0.2)
+                         mean_regrets - confidence_interval, 
+                         mean_regrets + confidence_interval, 
+                         alpha=0.2)
 
     plt.xlabel('Iteration')
     plt.ylabel('Cumulative Regret')

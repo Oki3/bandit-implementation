@@ -2,7 +2,7 @@ import numpy as np
 from Policies.BasePolicy import BasePolicy
 
 class LinUCB(BasePolicy):
-    def __init__(self, n_arms, d, alpha=0.1):
+    def __init__(self, n_arms, d, alpha=0.3):
         super().__init__(n_arms)
         self.alpha = alpha
         self.A = [np.identity(d) for _ in range(n_arms)]
